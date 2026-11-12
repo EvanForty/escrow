@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="logo.png">
+<meta name="description" content="Escrow: the escrow launchpad of Solana. Lock funds, set release conditions, and earn SOL from real trading fees.">
+<title>Escrow: lock funds, unlock trust</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#C94E03; --g2:#A83F00; --dark:#221D1A; --dark2:#332B26;
+  --mint:#FFF3E8; --mint2:#FBDCC0; --mint3:#F2A45E;
+  --ink:#1E1915; --muted:#6E625A; --line:#EFE6DD; --soft:#FBF8F5;
+  --paper:#FFFFFF; --card:#FFFFFF; --gold:#F6C343; --gold-ink:#5A4300;
+  --on-dark:#FFFFFF; --on-dark-m:#C9BBB0; --accent-on-dark:#F6B73C;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --g:#E8691C; --g2:#F27E35; --dark:#2A231F; --dark2:#3A302A;
+  --mint:#24180F; --mint2:#3A2617; --mint3:#8A4A1C;
+  --ink:#F4EDE7; --muted:#B3A69C; --line:#33291F; --soft:#1A140F;
+  --paper:#110D0A; --card:#17110D; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --g:#E8691C; --g2:#F27E35; --dark:#2A231F; --dark2:#3A302A;
+  --mint:#24180F; --mint2:#3A2617; --mint3:#8A4A1C;
+  --ink:#F4EDE7; --muted:#B3A69C; --line:#33291F; --soft:#1A140F;
+  --paper:#110D0A; --card:#17110D; color-scheme:dark;}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 80px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Inter Tight",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--mint3);outline-offset:2px}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:-.02em}
+.wrap{max-width:1290px;margin:0 auto;padding:0 28px}
+.gtxt{color:var(--g)}
+
+/* header */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--paper)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:36px;height:66px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-weight:800;font-size:21px;letter-spacing:-.02em}
+.brand img{width:34px;height:34px;border-radius:8px}
+.links{display:flex;gap:30px;flex:1;overflow-x:auto;scrollbar-width:none}
+.links::-webkit-scrollbar{display:none}
+.links a{text-decoration:none;color:var(--muted);white-space:nowrap;font-weight:500;padding:20px 0 18px;border-bottom:3px solid transparent}
+.links a:hover{color:var(--ink)}
+.links a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--g)}
+.navr{display:flex;gap:10px;align-items:center}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card);display:grid;place-items:center;cursor:pointer;text-decoration:none}
+.ca{display:none;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 14px;font-size:14px;white-space:nowrap}
+.ca .addr{font-family:"JetBrains Mono",monospace;color:var(--muted);font-size:13px}
+.ca .cp{color:var(--g);font-weight:700;background:none;border:0;cursor:pointer;padding:0}
+.ca .buy{background:var(--g);color:#fff;border:0;border-radius:7px;padding:6px 14px;font-weight:700;cursor:pointer}
+body.on-escrow .ca,body.on-fees .ca{display:flex}
+body.on-escrow .navlaunch,body.on-fees .navlaunch,body.on-launch .navlaunch,body.on-dashboard .navlaunch,body.on-profile .navlaunch,body.on-coins .navlaunch{display:none}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;cursor:pointer;text-decoration:none;font-weight:700;padding:15px 26px;background:var(--g);color:#fff;font-size:17px}
+.btn:hover{background:var(--g2)}
+.btn.out{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn.out:hover{background:var(--mint)}
+.btn.sm{padding:11px 18px;font-size:16px}
+.btn.dk{background:var(--dark)}
+.btn.dk:hover{background:var(--dark2)}
+.notch{clip-path:polygon(0 10px,10px 10px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 10px),0 calc(100% - 10px))}
+.notch-s{clip-path:polygon(0 6px,6px 6px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 6px) calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 6px),0 calc(100% - 6px))}
+
+.pill{display:inline-block;font-size:15px;font-weight:600;color:var(--g2);background:var(--mint);border:1px solid var(--mint2);padding:5px 14px;border-radius:999px}
+h1{font-size:clamp(44px,6.2vw,70px);line-height:1.02;letter-spacing:-.045em;margin:20px 0 22px;font-weight:800}
+h1 .gtxt{color:var(--g)}
+h2{font-size:clamp(30px,3.4vw,36px);letter-spacing:-.035em;line-height:1.1;margin:0 0 6px;font-weight:800}
+.lead{font-size:20px;color:var(--muted);max-width:640px;margin:0 0 30px;line-height:1.55}
+.sub{color:var(--muted);margin:0;font-size:17px}
+section.block{padding:84px 0 0}
+.headrow{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.tl{color:var(--g);font-weight:700;text-decoration:none;white-space:nowrap}
+.tl:hover{text-decoration:underline}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:44px;padding-top:50px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:14px;margin-top:36px}
+.stats>div{padding:18px 18px 20px;border-left:1px solid var(--line)}
+.stats>div:first-child{border-left:0}
+.stats .k{font-size:14px;color:var(--muted)}
+.stats .v{font-size:28px;margin-top:10px}
+.u{font-size:13px;color:var(--muted);margin-left:6px;font-family:"Inter Tight",sans-serif;font-weight:500;letter-spacing:0}
+
+.topcoin{background:var(--dark);color:#fff;border-radius:18px;padding:26px 26px 22px}
+.topcoin .r1{display:flex;justify-content:space-between;align-items:center}
+.topcoin .r1 .lbl{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14px;color:var(--accent-on-dark);letter-spacing:.06em}
+.topcoin .r1 a{color:var(--accent-on-dark);font-weight:700;text-decoration:none}
+.topcoin .c{display:flex;gap:20px;align-items:center;margin:20px 0 24px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.14)}
+.topcoin .tk{font-size:31px;font-weight:800;letter-spacing:-.03em}
+.topcoin .nm{color:#F3E6DA;margin-bottom:8px}
+.topcoin small{color:var(--on-dark-m);font-size:14px;display:block;margin-top:4px}
+.topcoin .g3{display:grid;grid-template-columns:repeat(3,1fr)}
+.topcoin .g3 .k{color:var(--on-dark-m);font-size:15px}
+.topcoin .g3 .v{font-size:25px;margin-top:6px}
+
+.panel{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:20px 22px}
+.jl .item{display:flex;align-items:center;gap:14px;padding:9px 0;text-decoration:none}
+.jl .meta{flex:1;min-width:0}
+.jl .meta b{display:block;font-size:18px;font-weight:800}
+.jl .meta span{font-size:14px;color:var(--muted)}
+.jl .r{text-align:right}
+.jl .r b{display:block;color:var(--g);font-family:"JetBrains Mono",monospace}
+.jl .r span{font-size:14px;color:var(--muted)}
+
+/* avatar */
+.av{flex:none;display:grid;place-items:center;border-radius:12px;background:var(--g);width:46px;height:46px}
+.av svg{width:56%;height:56%}
+.av.md{width:64px;height:64px;border-radius:14px}
+.av.lg{width:98px;height:98px;border-radius:18px}
+.av.sm{width:38px;height:38px;border-radius:10px}
+.av.alt{background:#D9661A}.av.alt2{background:#E08A2E}
+
+/* climb blocks */
+.blk{display:flex;gap:3px;align-items:center}
+.blk i{width:8px;height:7px;background:var(--mint2)}
+.blk i.on{background:var(--g)}
+.blk i.hi{background:var(--dark)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .blk i.hi{background:var(--accent-on-dark)}}
+:root[data-theme="dark"] .blk i.hi{background:var(--accent-on-dark)}
+.blk.gap i:nth-child(6){margin-left:6px}
+
+/* coin cards */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.cc{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 18px 16px;text-decoration:none;display:block;transition:border-color .15s}
+.cc:hover{border-color:var(--mint3)}
+.cc .top{display:flex;gap:14px;align-items:center}
+.cc .top .av{width:62px;height:62px;border-radius:12px}
+.cc .meta{flex:1;min-width:0}
+.cc .meta b{display:block;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.cc .meta span{font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.cc .mc{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--g);font-size:17px}
+.age{font-size:14px;font-weight:700;background:var(--mint);color:var(--g2);padding:4px 9px;border-radius:7px;white-space:nowrap}
+.cc .cl{margin:16px 0 0}
+.cc .cl small{display:block;font-size:14px;color:var(--muted);margin-top:6px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
+.trio .k{font-size:13px;color:var(--muted)}
+.trio .v{font-family:"JetBrains Mono",monospace;font-size:16px;font-weight:700;margin-top:4px}
+.trio .v small{font-family:"Inter Tight",sans-serif;font-size:12px;color:var(--muted);font-weight:500;margin-left:3px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+.step{border:1px solid var(--line);border-radius:14px;padding:26px;background:var(--soft)}
+.step.d{background:var(--dark);border-color:var(--dark);color:#fff}
+.step .n{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--g)}
+.step.d .n{color:var(--accent-on-dark)}
+.step h3{margin:14px 0 10px;font-size:23px;letter-spacing:-.02em;font-weight:800}
+.step p{margin:0;color:var(--muted);font-size:17px}
+.step.d p{color:#F3E6DA}
+.split{display:flex;height:15px;margin:26px 0 14px;border-radius:999px;overflow:hidden}
+.split span{display:block;height:100%}
+.legend{display:flex;gap:26px;flex-wrap:wrap;color:var(--muted)}
+.legend i{display:inline-block;width:13px;height:13px;margin-right:9px;vertical-align:-1px;border-radius:2px}
+.c1{background:var(--g)}.c2{background:var(--dark)}.c3{background:var(--mint3)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c2{background:var(--accent-on-dark)}}
+:root[data-theme="dark"] .c2{background:var(--accent-on-dark)}
+
+.banner{margin:64px 0 0;background:var(--dark);color:#fff;padding:30px 34px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.banner img{width:82px;height:82px;border-radius:14px}
+.banner .t{flex:1;min-width:280px}
+.banner h3{margin:0 0 6px;font-size:30px;letter-spacing:-.03em;font-weight:800}
+.banner p{margin:0;color:#F3E6DA;font-size:17px}
+.banner .nums{display:flex;gap:28px}
+.banner .nums .k{font-size:14px;color:var(--on-dark-m)}
+.banner .nums .v{font-size:30px}
+.banner a.go{color:var(--accent-on-dark);font-weight:700;text-decoration:none;font-size:18px}
+.banner .u{color:var(--on-dark-m)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th{font-size:14px;font-weight:500;color:var(--muted);text-align:left;padding:16px 22px;background:var(--soft)}
+td{padding:14px 22px;border-top:1px solid var(--line);vertical-align:middle;font-size:16px}
+td.m{font-family:"JetBrains Mono",monospace;font-weight:500}
+td.g{color:var(--g);font-family:"JetBrains Mono",monospace;font-weight:700}
+td.g small{color:var(--muted);font-family:"Inter Tight",sans-serif;font-weight:600;font-size:12px;margin-left:4px}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--soft)}
+.cellc{display:flex;gap:14px;align-items:center}
+.cellc b{display:block;font-weight:800;font-size:17px}
+.cellc span{font-size:13px;color:var(--muted)}
+.cellc span.mo{font-family:"JetBrains Mono",monospace}
+.rank{display:inline-grid;place-items:center;width:52px;height:34px;background:var(--g);color:#fff;font-family:"JetBrains Mono",monospace;font-weight:700;border-radius:5px}
+.sortbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:56px 0 16px}
+.sortbar .lbl{color:var(--muted);margin-right:4px}
+.chip{border:1px solid var(--line);background:var(--soft);padding:9px 16px;border-radius:9px;cursor:pointer;font-weight:600;font-size:16px}
+.chip[aria-pressed="true"]{background:var(--g);color:#fff;border-color:var(--g)}
+.badge{display:inline-block;background:var(--gold);color:var(--gold-ink);font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px;padding:2px 7px;border-radius:5px;margin:0 8px}
+
+/* stat tiles (coins page) */
+.tiles{display:grid;gap:12px}
+.tile{border-radius:12px;padding:22px 22px;display:flex;align-items:center;gap:40px;border:1px solid var(--mint2);background:var(--mint)}
+.tile .v{font-size:30px;min-width:120px;color:var(--g2)}
+.tile .k{font-weight:700;font-size:17px}
+.tile.a{background:var(--g);color:#fff;border-color:var(--g)}
+.tile.a .v{color:#fff}
+.tile.b{background:var(--dark);color:#fff;border-color:var(--dark)}
+.tile.b .v{color:#fff}
+
+/* launch */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.split-box{display:grid;gap:10px}
+.sb{display:flex;align-items:center;gap:30px;border-radius:12px;padding:16px 22px;color:#fff}
+.sb .p{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:30px;min-width:76px}
+.sb b{display:block;font-size:17px}
+.sb small{font-size:14px;opacity:.85}
+.field{margin-bottom:16px}
+.field label,.flab{display:block;font-weight:700;margin-bottom:8px;font-size:17px}
+.field label em,.flab em{font-style:normal;color:var(--muted);font-weight:400;font-size:14px;margin-left:6px}
+.inp{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:10px;background:var(--soft);outline:0;font-size:17px}
+.inp:focus{border-color:var(--g);background:var(--card)}
+.inp.mono{font-weight:500}
+.img-drop{width:140px;height:140px;border:1px dashed var(--mint3);border-radius:12px;display:grid;place-items:center;text-align:center;color:var(--muted);cursor:pointer;background:var(--soft);overflow:hidden}
+.img-drop img{width:100%;height:100%;object-fit:cover}
+.idrow{display:grid;grid-template-columns:140px 1fr;gap:16px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:10px 14px;cursor:pointer;text-align:center;font-weight:600;font-size:16px;min-width:46px}
+.seg button small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--g);border-color:var(--g);color:#fff}
+.seg button[aria-pressed="true"] small{color:#FFEBD9}
+.seg.wide button{flex:1;padding:8px 10px}
+.mpanel .hd{font-weight:800;font-size:17px}
+.mpanel .hd span{font-weight:400;color:var(--muted);font-size:14px;margin-left:6px}
+.msel{display:grid;grid-template-columns:auto 1fr;gap:24px;margin-top:16px}
+.chart{background:var(--soft);border-radius:12px;padding:18px 20px;margin-top:18px}
+.cols{display:grid;grid-template-columns:repeat(var(--n,6),1fr);gap:6px;align-items:end}
+.col{text-align:center}
+.col .stk{display:flex;flex-direction:column-reverse;gap:3px;align-items:center;margin-bottom:10px}
+.col .stk i{width:18px;height:9px;background:var(--line)}
+.col .stk i.on{background:var(--g)}
+.col .stk i.hf{background:var(--mint3)}
+.col .stk i.hi{background:var(--dark)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .col .stk i.hi{background:var(--accent-on-dark)}}
+:root[data-theme="dark"] .col .stk i.hi{background:var(--accent-on-dark)}
+.col b{display:block;font-family:"JetBrains Mono",monospace;font-size:15px}
+.col span{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted)}
+.note{font-size:15px;color:var(--muted);margin:14px 0 0}
+.summary{border-top:1px solid var(--line);margin-top:20px;padding-top:6px}
+.summary div{display:flex;justify-content:space-between;gap:16px;padding:9px 0}
+.summary div span{color:var(--muted);font-size:15px}
+.summary div b{text-align:right;font-size:18px;font-weight:700}
+
+/* lock page */
+.paybar{display:grid;grid-template-columns:1fr repeat(4,1fr);gap:14px;margin-top:26px;align-items:stretch}
+.box{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--soft)}
+.box.d{background:var(--dark);color:#fff;border-color:var(--dark)}
+.box .k{font-size:15px;color:var(--muted)}
+.box.d .k{color:#F3E6DA}
+.box .v{font-size:28px;margin-top:22px}
+.box .v small{font-size:13px;font-family:"Inter Tight",sans-serif;color:var(--muted);font-weight:500;margin-left:6px;letter-spacing:0}
+.box.d .v small{color:var(--on-dark-m)}
+.timer{font-size:62px;line-height:1;margin-top:6px}
+.ticks{display:flex;gap:4px;margin-top:14px;max-width:220px}
+.ticks i{flex:1;height:8px;background:var(--line)}
+.ticks i.on{background:var(--g)}
+.wallet{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--dark);color:#fff;border-radius:12px;padding:14px 18px;margin-top:16px}
+.wallet .k{color:var(--on-dark-m)}
+.wallet .a{font-family:"JetBrains Mono",monospace;font-size:14px}
+.wallet .bal{background:var(--g);font-family:"JetBrains Mono",monospace;font-weight:700;padding:4px 10px;border-radius:6px}
+.wallet .lnk{font-weight:700;color:#fff;opacity:.65}
+.trio3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.trio3 .box .v{font-size:36px;margin-top:10px}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+.out{background:var(--dark);color:#fff;border-radius:16px;padding:24px}
+.out .k{color:var(--on-dark-m);font-size:15px}
+.out .v{font-size:40px;margin:6px 0 16px}
+.out .row{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid rgba(255,255,255,.14)}
+.out .row span{color:var(--on-dark-m)}
+.out .btn{background:var(--g);width:100%;margin-top:16px}
+
+/* fees */
+.ftiles{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ftiles .box{min-height:126px}
+.ftiles .box .v{font-size:36px;margin-top:14px}
+.bigpay{background:var(--dark);color:#fff;border-radius:18px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;margin-top:36px}
+.bigpay .k{color:var(--accent-on-dark);font-weight:700}
+.bigpay .v{font-size:66px;line-height:1;margin:18px 0 22px}
+.bigpay .v small{font-size:22px;color:var(--accent-on-dark);margin-left:10px}
+.bigpay p{margin:0;color:#F3E6DA}
+.bigpay .adr{background:var(--dark2);border-radius:12px;padding:22px}
+.bigpay .adr .a{font-family:"JetBrains Mono",monospace}
+.flow{display:grid;gap:12px}
+.flow div{display:grid;grid-template-columns:1fr 1fr 40px 1.3fr;gap:16px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:22px 24px;background:var(--soft)}
+.flow div:last-child{background:var(--card)}
+.flow span{color:var(--muted)}
+.flow b{font-weight:700}
+.flow i{font-style:normal;color:var(--g);font-size:22px}
+.pool{display:grid;grid-template-columns:5fr 4fr 2.4fr;gap:16px;margin-top:22px}
+.pool>div{border-radius:16px;padding:30px;min-height:200px}
+.pool .p{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:56px;line-height:1}
+.pool h3{margin:22px 0 8px;font-size:21px;font-weight:800}
+.pool p{margin:0}
+
+/* dashboard */
+.dash{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto auto;gap:14px}
+.dtot{grid-row:span 2;background:var(--dark);color:#fff;border-radius:18px;padding:30px}
+.dtot .k{color:var(--accent-on-dark);font-weight:700}
+.dtot .v{font-size:78px;line-height:1;margin:44px 0 36px}
+.dtot .v small{font-size:26px;color:var(--accent-on-dark);margin-left:8px}
+.pxbar{display:flex;gap:5px;margin-bottom:28px}
+.pxbar i{flex:1;height:20px;background:var(--g)}
+.pxbar i.l{background:#FBDCC0}
+.dtot .lg div{margin:8px 0;color:#F3E6DA}
+.dtot .lg i{display:inline-block;width:13px;height:13px;margin-right:10px;vertical-align:-1px}
+.dc{border:1px solid var(--line);border-left:5px solid var(--g);border-radius:14px;padding:22px;background:var(--soft)}
+.dc .k{font-weight:600}
+.dc .v{font-size:40px;margin:16px 0 14px}
+.dc .v small{font-size:16px;color:var(--g);margin-left:6px}
+.dc p{margin:0;color:var(--muted);font-size:15px}
+.dc.wide{grid-column:span 2}
+.dc a{color:inherit}
+.drow{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--line);border-radius:12px;margin-top:14px}
+.drow>div{display:flex;gap:48px;align-items:center;padding:18px 22px;font-size:17px}
+.drow>div+div{border-left:1px solid var(--line)}
+.drow span{color:var(--muted)}
+.drow b{font-family:"JetBrains Mono",monospace;font-size:20px}
+.pw{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.pw .panel b{font-size:19px}
+.pw .bal{float:right;font-family:"JetBrains Mono",monospace;color:var(--muted);font-size:14px}
+.pw .ad{background:var(--soft);border-radius:10px;padding:16px;margin-top:14px;font-family:"JetBrains Mono",monospace;font-size:14px}
+.pw .ad span{display:block;margin-top:10px;font-family:"Inter Tight",sans-serif;color:var(--g);font-weight:700;opacity:.55}
+
+.coinhead{display:flex;gap:24px;align-items:center;margin:48px 0 10px;flex-wrap:wrap}
+.coinhead h1{margin:0;font-size:clamp(38px,5vw,58px)}
+
+footer{margin-top:110px;border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer .brand{font-size:17px}
+footer .brand img{width:26px;height:26px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;background:var(--dark);color:#fff;padding:14px 20px;border-radius:12px;max-width:min(92vw,520px);transition:.25s;z-index:50;pointer-events:none;font-size:15px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.view{display:none}.view.on{display:block}
+
+@media (max-width:1080px){
+  .hero,.two,.calc,.bigpay{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:1fr}
+  .paybar{grid-template-columns:repeat(2,1fr)}
+  .paybar>:first-child{grid-column:1/-1}
+  .pool,.pw{grid-template-columns:1fr}
+  .flow div{grid-template-columns:1fr;gap:4px}
+  .flow i{display:none}
+  .dash{grid-template-columns:1fr 1fr}
+  .dtot{grid-column:1/-1;grid-row:auto}
+  .nav{gap:20px}.links{gap:20px}
+  .ca .addr{display:none}
+}
+@media (max-width:640px){
+  .wrap{padding:0 16px}
+  .brand span,.navlaunch{display:none}
+  .grid4{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stats>div:nth-child(3){border-left:0}
+  .stats>div:nth-child(n+3){border-top:1px solid var(--line)}
+  .idrow,.tri,.msel,.trio3,.ftiles,.dash,.drow{grid-template-columns:1fr}
+  .dc.wide{grid-column:auto}
+  .drow>div+div{border-left:0;border-top:1px solid var(--line)}
+  .timer{font-size:50px}
+  .tile{gap:16px}
+  .dtot .v{font-size:56px}
+  .ca{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.empty{border:1.5px dashed var(--mint3);border-radius:16px;padding:40px 24px;text-align:center;background:var(--soft);grid-column:1/-1}
+.empty b{display:block;font-size:20px;margin-bottom:6px}
+.empty p{margin:0 auto 18px;color:var(--muted);max-width:44ch}
+td.emp{text-align:center;color:var(--muted);padding:34px 22px}
+.callout{background:var(--mint);border:1px solid var(--mint2);border-radius:12px;padding:16px 20px;margin-top:20px;color:var(--ink)}
+.types{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+.types>div{border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--soft)}
+.types>div.d{background:var(--dark);border-color:var(--dark);color:#fff}
+.types>div.d p{color:#F3E6DA}
+.types b{display:block;font-size:19px;margin-bottom:6px}
+.types p{margin:0;color:var(--muted);font-size:15px}
+@media (max-width:1080px){.types{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.types{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#home"><img src="logo.png" alt=""><span>Escrow</span></a>
+    <nav class="links" aria-label="Main">
+      <a href="#launch">Launch</a>
+      <a href="#coins">Coins</a>
+      <a href="#escrow">$ESCROW</a>
+      <a href="#fees">Fees</a>
+      <a href="#agreements">Agreements</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#profile">Profile</a>
+    </nav>
+    <div class="navr">
+      <div class="ca"><b>$ESCROW</b><span class="addr">CA at launch</span><button class="cp" data-toast="The $ESCROW contract address will be posted here at launch.">Copy</button><button class="buy" data-toast="$ESCROW isn’t trading yet. Buying opens at launch.">Buy</button></div>
+      <a class="btn sm navlaunch" href="#launch">Launch a coin</a>
+      <button class="iconbtn" aria-label="Notifications" data-toast="No notifications yet.">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <a class="iconbtn" aria-label="Escrow on X" href="https://x.com/EscrowPays" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18h1.7L6.3 3.9H4.5L17.8 20Z"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HOME -->
+<div class="view" id="v-home"><div class="wrap">
+  <div class="hero">
+    <div>
+      <span class="pill">The escrow launchpad</span>
+      <h1>Launch a coin <span class="gtxt">that pays its lockers.</span></h1>
+      <p class="lead">Every coin launched on Escrow pays its lockers 60% of its fees every 10 minutes. 30% goes to $ESCROW stakers and 10% to the treasury. Every coin gets its own escrow vault, and longer locks earn up to 7.5x.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a class="btn" href="#launch">Launch a coin</a>
+        <a class="btn out" href="#coins">Browse coins</a>
+      </div>
+      <div class="stats">
+        <div><div class="k">Coins launched</div><div class="v mono" id="sLaunched">0</div></div>
+        <div><div class="k">SOL paid to lockers</div><div class="v mono"><span id="sPaid">0</span><span class="u">SOL</span></div></div>
+        <div><div class="k">Lockers earning</div><div class="v mono" id="sLockers">0</div></div>
+        <div><div class="k">Paid every</div><div class="v mono">10<span class="u">min</span></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="topcoin" id="topCoin"></div>
+      <div class="panel" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><b style="font-size:17px">Just launched</b><a class="tl" href="#coins">All coins →</a></div>
+        <div class="jl" id="justLaunched"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="headrow"><div><h2>Trending</h2><p class="sub">The biggest coins launched on Escrow right now.</p></div><a class="tl" href="#coins">All coins →</a></div>
+    <div class="grid4" id="trending"></div>
+  </section>
+
+  <section class="block">
+    <div class="headrow"><div><h2>New launches</h2><p class="sub">Just launched. Early lockers lock in first.</p></div><a class="tl" href="#coins">All coins →</a></div>
+    <div class="grid4" id="newLaunches"></div>
+  </section>
+
+  <section class="block">
+    <h2>How a launch works</h2>
+    <p class="sub">Three steps. The payouts run on their own after that.</p>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Make your coin</h3><p>Name, ticker, image. Pair it with SOL or a tokenized stock. Every coin gets its own escrow vault.</p></div>
+      <div class="step"><div class="n">02</div><h3>Set the lock schedule</h3><p>Max 5x, 7.5x or 10x, over short, standard or long schedules. Lockers who commit longer earn more weight.</p></div>
+      <div class="step d"><div class="n">03</div><h3>Lockers get paid</h3><p>60% of the fees go to your coin’s lockers every 10 minutes in SOL. When a lock ends, unlock or renew to keep earning.</p></div>
+    </div>
+    <div class="split" aria-hidden="true"><span class="c1" style="width:60%"></span><span class="c2" style="width:30%"></span><span class="c3" style="width:10%"></span></div>
+    <div class="legend"><span><i class="c1"></i>60% to lockers</span><span><i class="c2"></i>30% to $ESCROW stakers</span><span><i class="c3"></i>10% to treasury</span></div>
+    <div style="margin-top:34px"><a class="btn" href="#launch">Launch a coin</a></div>
+  </section>
+
+  <div class="banner notch">
+    <img src="logo.png" alt="">
+    <div class="t"><h3>$ESCROW, the coin behind the pad</h3><p>30% of every launched coin’s fees goes to $ESCROW stakers every 10 minutes. More launches, more trading, a bigger pool.</p></div>
+    <div class="nums">
+      <div><div class="k">Paid to lockers</div><div class="v mono"><span id="bPaid">0</span><span class="u">SOL</span></div></div>
+      <div><div class="k">Lockers</div><div class="v mono" id="bLockers">0</div></div>
+    </div>
+    <a class="go" href="#escrow">Open $ESCROW →</a>
+  </div>
+</div></div>
+
+<!-- LAUNCH -->
+<div class="view" id="v-launch"><div class="wrap">
+  <div class="hero" style="align-items:center;padding-top:40px">
+    <div>
+      <span class="pill">Launch on Escrow</span>
+      <h1>Launch a coin <span class="gtxt">that pays its lockers.</span></h1>
+      <p class="lead" style="margin:0">Your lockers get paid every 10 min by amount × multiplier. Pick their max: 5x, 7.5x or 10x, and how long they have to lock to reach it. When a lock ends, holders can unlock or renew to keep earning.</p>
+    </div>
+    <div>
+      <div class="split-box">
+        <div class="sb" style="background:var(--g)"><span class="p">60%</span><div><b>To your lockers</b><small>every 10 min, by amount × multiplier</small></div></div>
+        <div class="sb" style="background:var(--dark)"><span class="p">30%</span><div><b>To $ESCROW stakers</b><small>every 10 min, by amount × multiplier</small></div></div>
+        <div class="sb" style="background:var(--mint);color:var(--ink);border:1px solid var(--mint2)"><span class="p" style="color:var(--g2)">10%</span><div><b>To the treasury</b><small style="color:var(--muted)">keeps Escrow running</small></div></div>
+      </div>
+      <p class="note">Set at launch for every coin. Rewards come from real trading fees, never from new token emissions.</p>
+    </div>
+  </div>
+
+  <div class="two" style="margin-top:36px">
+    <div>
+      <div class="panel">
+        <div class="idrow">
+          <label class="img-drop" id="imgDrop" tabindex="0"><span><b style="font-size:24px;color:var(--g)">+</b><br>Add image</span><input type="file" accept="image/*" id="imgInput" hidden></label>
+          <div>
+            <div class="field"><label for="fTicker">Ticker</label><input class="inp mono" id="fTicker" placeholder="TICKER" maxlength="10"></div>
+            <div class="field" style="margin:0"><label for="fName">Name</label><input class="inp" id="fName" placeholder="Coin name" maxlength="32"></div>
+          </div>
+        </div>
+        <div class="field" style="margin-top:16px"><label for="fDesc">Description<em>optional</em></label><textarea class="inp" id="fDesc" rows="2" placeholder="What is it?"></textarea></div>
+        <div class="tri">
+          <div class="field" style="margin:0"><label for="fX">X<em>optional</em></label><input class="inp" id="fX" placeholder="https://x.com/…"></div>
+          <div class="field" style="margin:0"><label for="fW">Website<em>optional</em></label><input class="inp" id="fW" placeholder="https://…"></div>
+          <div class="field" style="margin:0"><label for="fT">Telegram<em>optional</em></label><input class="inp" id="fT" placeholder="https://t.me/…"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px">
+        <div class="field"><label for="fPair">Pair<em>Pair your coin with SOL or any tokenized stock.</em></label>
+          <select class="inp" id="fPair"><option value="SOL">SOL · Solana</option><option value="SPYx">SPYx · S&amp;P 500</option><option value="TSLAx">TSLAx · Tesla</option><option value="NVDAx">NVDAx · Nvidia</option><option value="GLDx">GLDx · Gold</option></select>
+        </div>
+        <div class="field"><span class="flab">First buy<em>Bought in the same launch, so nobody gets in first.</em></span>
+          <div class="seg" id="firstBuy"><button aria-pressed="true" data-v="None">None</button><button aria-pressed="false" data-v="0.1 SOL">0.1 SOL</button><button aria-pressed="false" data-v="0.25 SOL">0.25 SOL</button><button aria-pressed="false" data-v="0.5 SOL">0.5 SOL</button></div>
+          <p class="note" style="margin-top:8px">Max 0.873 SOL (3% of supply)</p>
+        </div>
+        <div class="field"><span class="flab">Escrow first buy<em>Lock your own bag so holders can see you’re staying.</em></span>
+          <div class="seg" id="autoEscrow"><button aria-pressed="true" data-v="No">No</button><button aria-pressed="false" data-v="max">Lock to max</button></div>
+        </div>
+        <div class="summary" id="summary"></div>
+      </div>
+    </div>
+    <div class="panel mpanel">
+      <div class="hd">Escrow multiplier<span>How much extra weight a lock earns. Your max and ladder are set at launch.</span></div>
+      <div class="msel">
+        <div><span class="flab" style="font-size:16px">Max</span><div class="seg" id="maxPick"><button aria-pressed="false" data-v="5">5x</button><button aria-pressed="true" data-v="7.5">7.5x</button><button aria-pressed="false" data-v="10">10x</button></div></div>
+        <div><span class="flab" style="font-size:16px">Ladder</span><div class="seg wide" id="ladPick"><button aria-pressed="false" data-v="short">Short<small>max at 90d</small></button><button aria-pressed="true" data-v="standard">Standard<small>max at 365d</small></button><button aria-pressed="false" data-v="long">Long<small>max at 730d</small></button></div></div>
+      </div>
+      <div class="chart"><div class="cols" id="ladCols"></div><p class="note" id="ladNote" style="margin-top:12px"></p></div>
+      <p class="note">A multiplier raises a lockr’s share of the pool, not the amount of SOL the coin makes. Locked tokens can’t be withdrawn until the lock ends.</p>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:20px">
+    <button class="btn dk notch js-connect" style="width:100%;padding:20px" id="launchBtn" data-act="launch">Connect wallet</button>
+    <p class="note" style="margin-top:12px">Connect to launch your coin.</p>
+  </div>
+</div></div>
+
+<!-- COINS -->
+<div class="view" id="v-coins"><div class="wrap">
+  <div class="hero" style="align-items:center;padding-top:40px">
+    <div>
+      <span class="pill">All coins</span>
+      <h1>Every coin here <span class="gtxt">pays its lockers.</span></h1>
+      <p class="lead">Each coin pays its lockers every 10 minutes by amount × multiplier, with its own lock ladder up to 10x. Sort by market cap, payouts or lockers.</p>
+      <a class="btn" href="#launch">Launch a coin</a>
+    </div>
+    <div class="tiles">
+      <div class="tile a"><div class="v mono" id="tLaunched">0</div><div class="k">Coins launched</div></div>
+      <div class="tile"><div class="v mono"><span id="tPaid">0</span><span class="u">SOL</span></div><div class="k">Paid to their lockers</div></div>
+      <div class="tile b"><div class="v mono" id="tLockers">0</div><div class="k">Lockers earning</div></div>
+    </div>
+  </div>
+  <div class="sortbar" role="group" aria-label="Sort coins">
+    <span class="lbl">Sort by</span>
+    <button class="chip" data-sort="mcap" aria-pressed="true">Market cap</button>
+    <button class="chip" data-sort="paid" aria-pressed="false">Paid to lockers</button>
+    <button class="chip" data-sort="lockers" aria-pressed="false">Lockers</button>
+    <button class="chip" data-sort="age" aria-pressed="false">Newest</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Coin</th><th>Pair</th><th>Lock ladder</th><th>Lockers</th><th>Market cap</th><th>Paid to lockers</th><th>Launched</th></tr></thead>
+    <tbody id="coinRows"></tbody>
+  </table></div>
+</div></div>
+
+<!-- COIN -->
+<div class="view" id="v-coin"><div class="wrap" id="coinDetail"></div></div>
+
+<!-- $ESCROW -->
+<div class="view" id="v-escrow"><div class="wrap">
+  <h1 style="margin-top:44px">Lock funds. <span class="gtxt" style="display:block">Unlock trust.</span></h1>
+  <div style="border-top:1px solid var(--line);margin-top:30px"></div>
+  <div class="paybar">
+    <div><div style="font-size:15px;color:var(--muted)">Next payout</div><div class="timer mono" id="timer">10:00</div><div class="ticks" id="ticks"></div><div style="font-size:15px;color:var(--muted);margin-top:8px">every 10 min</div></div>
+    <div class="box"><div class="k">Fee pot</div><div class="v mono"><span id="feePot">0.000</span><small>SOL</small></div></div>
+    <div class="box d"><div class="k">Total locked</div><div class="v mono">0<small>$ESCROW</small></div></div>
+    <div class="box"><div class="k">Paid to lockers</div><div class="v mono"><span id="pPaid">0</span><small>SOL</small></div></div>
+    <div class="box"><div class="k">Lockers counted</div><div class="v mono" id="pLockers">0</div></div>
+  </div>
+  <div class="wallet"><span class="k">Payout wallet</span><span class="a">Posted at launch</span><span class="bal">— SOL</span><span class="lnk">Every transaction on Solscan ↗</span></div>
+
+  <section class="block">
+    <div class="headrow"><div><h2>From launched coins</h2><p class="sub">30% of the fees of every coin launched on Escrow goes to $ESCROW stakers, paid every 10 minutes by amount × multiplier.</p></div><a class="tl" href="#coins">All coins →</a></div>
+    <div class="trio3">
+      <div class="box d"><div class="k">Launched coins have sent $ESCROW stakers</div><div class="v mono"><span id="fromCoins">0</span><small>SOL</small></div></div>
+      <div class="box"><div class="k">To $ESCROW stakers every 10 min, from coins</div><div class="v mono">0<small>SOL</small></div></div>
+      <div class="box"><div class="k">Coins launched on Escrow</div><div class="v mono" id="cLaunched2">0</div></div>
+    </div>
+    <div class="tw"><table><thead><tr><th>#</th><th>Coin</th><th>Sent to $ESCROW stakers</th><th>Its lockers</th></tr></thead><tbody id="sentRows"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="headrow"><div><h2>Lockers</h2><p class="sub">Ranked by amount × multiplier. The top wallets, refreshed every round.</p></div><input class="inp" id="findWallet" placeholder="Find a wallet" style="max-width:280px"></div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Wallet</th><th>Escrow</th><th>Lock</th><th>Unlocks in</th><th>Multiplier</th><th>Share</th><th>Owed</th><th>Total paid</th></tr></thead>
+      <tbody id="lockrRows"></tbody>
+    </table></div>
+  </section>
+
+  <section class="block">
+    <h2>Escrow $ESCROW</h2>
+    <p class="sub">See what a lock does to your share of the pool.</p>
+    <div class="calc">
+      <div class="panel">
+        <div class="field"><label for="cAmt">Amount of $ESCROW</label><input class="inp mono" id="cAmt" type="number" min="0" step="100000" value="10000000"></div>
+        <div class="field"><span class="flab">Lock</span><div class="seg" id="lockPick"></div></div>
+        <div class="field" style="margin:0"><label for="cFees">Fees into the $ESCROW pool per day<em>SOL</em></label><input class="inp mono" id="cFees" type="number" min="0" step="0.5" value="12"></div><div class="field" style="margin:0"><label for="cPool">Total weight locked by others<em>$ESCROW × multiplier</em></label><input class="inp mono" id="cPool" type="number" min="0" step="1000000" value="500000000"></div>
+        <p class="note">Estimate only. Real payouts depend on actual trading across every launched coin and on how everyone else locks.</p>
+      </div>
+      <div class="out">
+        <div class="k">Your reward weight</div><div class="v mono" id="oWeight">0</div>
+        <div class="row"><span>Share of pool</span><b class="mono" id="oShare">0%</b></div>
+        <div class="row"><span>Per 10 min</span><b class="mono" id="oTen">0 SOL</b></div>
+        <div class="row"><span>Per day</span><b class="mono" id="oDay">0 SOL</b></div>
+        <div class="row"><span>Unlocks</span><b id="oUnlock">Any time</b></div>
+        <button class="btn notch-s js-connect" data-act="escrow">Connect wallet to lock</button>
+      </div>
+    </div>
+  </section>
+</div></div>
+
+<!-- FEES -->
+<div class="view" id="v-fees"><div class="wrap">
+  <div class="hero" style="padding-top:40px">
+    <div>
+      <span class="pill">Fees</span>
+      <h1>Where every <span class="gtxt" style="display:block">fee goes.</span></h1>
+      <p class="lead">Every coin launched on Escrow pays 60% of its fees to its own lockers, 30% to $ESCROW stakers and 10% to the treasury, every 10 minutes. Nothing is minted to pay rewards: the pool is only as big as real trading makes it.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#launch">Launch a coin</a><a class="btn out" href="#agreements">Create an agreement</a></div>
+    </div>
+    <div class="ftiles">
+      <div class="box d"><div class="k">Next payout in</div><div class="v mono" id="timer2">10:00</div></div>
+      <div class="box"><div class="k">Coins paying this round</div><div class="v mono" id="activeV">0</div></div>
+      <div class="box"><div class="k">Top coin this round</div><div class="v mono" id="topRound">$0</div></div>
+      <div class="box"><div class="k">To $ESCROW stakers every 10 min, from coins</div><div class="v mono">0<small>SOL</small></div></div>
+    </div>
+  </div>
+  <div class="bigpay">
+    <div><div class="k">Treasury</div><div class="v mono"><span id="tre">0</span><small>SOL</small></div><p>10% of every coin’s fees. Keeps Escrow running.</p></div>
+    <div class="adr"><div class="a">Address posted at launch</div><div style="margin-top:12px;color:var(--accent-on-dark);font-weight:700;opacity:.6">Copy &nbsp; Solscan ↗</div></div>
+  </div>
+  <section class="block">
+    <h2 style="margin-bottom:22px">Where the fees go</h2>
+    <div class="flow">
+      <div><span>Every coin launched on Escrow</span><b>60% of its fees</b><i>→</i><b>Its own lockers, every 10 minutes</b></div>
+      <div><span>Every coin launched on Escrow</span><b>30% of its fees</b><i>→</i><b>$ESCROW stakers, every 10 minutes</b></div>
+      <div><span>Every coin launched on Escrow</span><b>The last 10%</b><i>→</i><b>The treasury</b></div>
+    </div>
+  </section>
+  <section class="block">
+    <h2>How the split works</h2>
+    <div class="pool">
+      <div style="background:var(--dark);color:#fff"><div class="p" style="color:var(--accent-on-dark)">60%</div><h3>Coin lockers</h3><p style="color:#F3E6DA">Split every 10 minutes by amount × multiplier across everyone locked in that coin’s vault.</p></div>
+      <div style="background:var(--g);color:#fff"><div class="p">30%</div><h3>$ESCROW stakers</h3><p style="color:#FFEBD9">Every launch on the pad feeds this pool, so it grows with the whole platform.</p></div>
+      <div style="background:var(--soft);border:1px solid var(--line)"><div class="p" style="color:var(--g)">10%</div><h3>Treasury</h3><p style="color:var(--muted)">Keeps Escrow running.</p></div>
+    </div>
+  </section>
+  <div class="banner notch">
+    <img src="logo.png" alt="">
+    <div class="t"><h3>Revenue, not emissions</h3><p>Rewards depend on actual trading. More launches and more volume mean more SOL for lockers, but that doesn’t guarantee any token goes up, and locking doesn’t protect you from price losses.</p></div>
+    <a class="go" href="#escrow">Open $ESCROW →</a>
+  </div>
+</div></div>
+
+<!-- LEADERBOARD -->
+<div class="view" id="v-agreements"><div class="wrap">
+  <div class="hero" style="padding-top:40px">
+    <div>
+      <span class="pill">Escrow agreements</span>
+      <h1>Lock funds. <span class="gtxt">Release on your terms.</span></h1>
+      <p class="lead">Lock tokens or SOL in a smart-contract escrow and set exactly when it releases: on a date, at a milestone, when both sides approve, a little at a time, or after a reward lock. No middleman holds the funds.</p>
+      <a class="btn" href="#new-agreement">Create an agreement</a>
+    </div>
+    <div class="ftiles">
+      <div class="box d"><div class="k">Open agreements</div><div class="v mono" id="agCount">0</div></div>
+      <div class="box"><div class="k">Value in escrow</div><div class="v mono">0<small>SOL</small></div></div>
+      <div class="box"><div class="k">Released all time</div><div class="v mono">0<small>SOL</small></div></div>
+      <div class="box"><div class="k">Middlemen</div><div class="v mono">None</div></div>
+    </div>
+  </div>
+  <section class="block">
+    <h2>Five ways to release</h2>
+    <p class="sub">Pick the agreement that fits the deal. Conditions are fixed when the escrow is created.</p>
+    <div class="types">
+      <div><b>Time-locked</b><p>Funds unlock on a set date.</p></div>
+      <div><b>Milestone</b><p>Funds release when a named verifier confirms the milestone.</p></div>
+      <div><b>Mutual</b><p>Both parties approve before anything moves.</p></div>
+      <div><b>Streaming</b><p>Funds unlock a little at a time between two dates.</p></div>
+      <div class="d"><b>Reward</b><p>Tokens stay locked and earn SOL from trading fees, up to 7.5x.</p></div>
+    </div>
+  </section>
+  <section class="block" id="new-agreement">
+    <h2>Create an agreement</h2>
+    <p class="sub" style="margin-bottom:22px">Set the asset, the recipient and the release rule. Everything is visible on-chain once it’s created.</p>
+    <div class="two">
+      <div class="panel">
+        <div class="field"><span class="flab">Agreement type</span>
+          <div class="seg" id="agType">
+            <button aria-pressed="true" data-v="time">Time-locked</button><button aria-pressed="false" data-v="milestone">Milestone</button><button aria-pressed="false" data-v="mutual">Mutual</button><button aria-pressed="false" data-v="stream">Streaming</button><button aria-pressed="false" data-v="reward">Reward</button>
+          </div>
+        </div>
+        <div class="tri" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label for="agAsset">Asset</label><select class="inp" id="agAsset"><option>SOL</option><option>A token launched on Escrow</option><option>Any SPL token</option></select></div>
+          <div class="field"><label for="agAmt">Amount</label><input class="inp mono" id="agAmt" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="field" id="agRecipWrap"><label for="agRecip">Recipient wallet</label><input class="inp mono" id="agRecip" placeholder="Solana address" style="font-size:15px"></div>
+        <div id="agCond"></div>
+        <div class="field" style="margin:0"><label for="agCancel">Cancellation</label><select class="inp" id="agCancel"><option>No cancellation</option><option>Either party can cancel before release</option><option>Sender can cancel before release</option><option>Cancel only if both agree</option></select></div>
+      </div>
+      <div class="panel">
+        <b style="font-size:18px">Summary</b>
+        <div class="summary" id="agSummary"></div>
+        <div class="callout">Milestones, disputes and cancellation rules must be agreed up front. Not every off-chain event can be verified automatically, so milestone escrows rely on the verifier you name.</div>
+        <button class="btn dk notch js-connect" data-act="agreement" style="width:100%;padding:18px;margin-top:20px">Connect wallet</button>
+      </div>
+    </div>
+  </section>
+  <section class="block">
+    <div class="headrow"><div><h2>Your agreements</h2><p class="sub">Every escrow you’ve created or are named in.</p></div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Agreement</th><th>Type</th><th>Asset</th><th>Amount</th><th>Counterparty</th><th>Releases</th><th>Status</th></tr></thead>
+      <tbody id="lbRows"></tbody>
+    </table></div>
+  </section>
+</div></div>
+
+<!-- DASHBOARD -->
+<div class="view" id="v-dashboard"><div class="wrap">
+  <span class="pill" style="margin-top:44px">Dashboard</span>
+  <h1>Everything Escrow does, <span class="gtxt">live.</span></h1>
+  <div class="dash">
+    <div class="dtot">
+      <div class="k">Total SOL paid to lockers so far</div>
+      <div class="v mono"><span id="dTotal">0</span><small>SOL</small></div>
+      <div class="pxbar" id="pxbar"></div>
+      <div class="lg"><div><i style="background:var(--g)"></i>$ESCROW stakers <b class="mono" id="dS">0 SOL</b></div><div><i style="background:#FBDCC0"></i>Coin lockers <b class="mono" id="dV">0 SOL</b></div></div>
+    </div>
+    <div class="dc"><div class="k">To $ESCROW stakers from launched coins, every 10 min</div><div class="v mono">0<small>SOL</small></div><p>30% of every coin’s fees. <span id="dFrom">0</span> SOL so far.</p></div>
+    <div class="dc"><div class="k">To launched coins’ lockers, every 10 min</div><div class="v mono">0<small>SOL</small></div><p>60% of their fees, split by amount × multiplier.</p></div>
+    <div class="dc wide"><div class="k">Escrow agreements</div><div class="v mono"><span id="agCount2">0</span><small>open</small></div><p>Time-locked, milestone, mutual, streaming and reward escrows, all on-chain. <a href="#agreements">Create an agreement →</a></p></div>
+  </div>
+  <div class="drow"><div><span>Coins launched</span><b id="dCoins">0</b></div><div><span>Lockers on launched coins</span><b id="dLockers">0</b></div></div>
+  <section class="block">
+    <h2>Payout wallets</h2>
+    <p class="sub" style="margin-bottom:22px">Every coin’s payouts and the $ESCROW payouts leave from these.</p>
+    <div class="pw">
+      <div class="panel"><span class="bal">Balance —</span><b>$ESCROW payouts</b><p class="sub" style="font-size:16px;margin-top:6px">Pays $ESCROW stakers every 10 minutes from launched coins’ fees (30% of each).</p><div class="ad">Posted at launch<span>Copy &nbsp; Solscan</span></div></div>
+      <div class="panel"><span class="bal">Balance —</span><b>Vault payouts</b><p class="sub" style="font-size:16px;margin-top:6px">Pays each coin’s lockers every 10 minutes (60% of its fees).</p><div class="ad">Posted at launch<span>Copy &nbsp; Solscan</span></div></div>
+    </div>
+  </section>
+</div></div>
+
+<!-- PROFILE -->
+<div class="view" id="v-profile"><div class="wrap">
+  <h1 style="margin-top:44px">Your locks. <span class="gtxt" style="display:block">What they pay you.</span></h1>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:26px">
+    <button class="btn dk js-connect" data-act="profile">Connect wallet</button>
+    <span style="color:var(--muted)">or</span>
+    <input class="inp" id="pAddr" placeholder="Paste any wallet address" style="flex:1;min-width:240px;font-family:'JetBrains Mono',monospace;font-size:15px">
+    <button class="btn dk" id="pShow">Show</button>
+  </div>
+  <p class="sub" style="margin-top:20px">See every coin you’ve locked on Escrow, your locks, and what each pays you every 10 minutes.</p>
+  <div id="pResult" style="margin-top:28px"></div>
+</div></div>
+
+</main>
+
+<footer><div class="wrap"><a class="brand" href="#home"><img src="logo.png" alt=""><span>Escrow</span></a><span style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">© 2026 Escrow. Lock funds. Unlock trust. <a href="https://x.com/EscrowPays" target="_blank" rel="noopener" class="tl">@EscrowPays on X</a></span></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const ICONS={
+ lock:["...####...","..#....#..","..#....#..",".########.",".########.",".####.###.",".###..###.",".####.###.",".########.",".........."],
+ stack:["...####...",".########.","..######..",".########.","..######..",".########.","..######..",".########.","..######..",".........."],
+ key:["..........",".###......","#...#.....","#.#.######","#...#.#.#.",".###..#.#.","..........","..........","..........",".........."],
+ bolt:[".....##...","....##....","...##.....","..######..",".....##...","....##....","...##.....","..##......","..........",".........."],
+ gem:["..######..",".#.#..#.#.","##########",".#..##..#.","..#.##.#..","...#..#...","....##....","..........","..........",".........."],
+ safe:["##########","#........#","#..####..#","#..#..#..#","#..#..#.##","#..####..#","#........#","##########",".#......#.",".........."],
+ hand:["..#.#.#...","..#.#.#.#.","..#.#.#.#.","..#######.","#.#######.","##.######.",".########.","..######..","..######..",".........."],
+ chain:["..........","###...###.","#.#...#.#.","#.#####.#.","#.#...#.#.","###...###.","..........","..........","..........",".........."]
+};
+function icon(k){const rows=ICONS[k];let r='';rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch==='#')r+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}));const h=rows.filter(r=>r.includes('#')).length;return `<svg viewBox="0 ${-(10-h)/2} 10 10" fill="#fff" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`}
+
+// lock ladders
+const LADDERS={short:['1d','3d','7d','14d','30d','90d'],standard:['7d','14d','30d','90d','180d','365d'],long:['30d','60d','90d','180d','365d','730d']};
+const LDAYS={short:[1,3,7,14,30,90],standard:[7,14,30,90,180,365],long:[30,60,90,180,365,730]};
+const FRAC=[0,.5/6.5,1/6.5,2.5/6.5,4/6.5,1];
+const mult=(max,i)=>Math.round((1+(max-1)*FRAC[i])*2)/2;
+const LADN={short:'Short',standard:'Standard',long:'Long'};
+
+const coins=[];
+const SHADES=['','alt','alt2'];
+coins.forEach((c,i)=>{c.id=c.t.toLowerCase();c.sh=SHADES[i%3]});
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const usd=v=>'$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0));
+const ago=h=>h<1?Math.round(h*60)+'m ago':h<24?Math.round(h)+'h ago':Math.floor(h/24)+'d ago';
+const sol=v=>v===0?'0':v<1?String(+v.toFixed(3)):v.toFixed(2);
+const av=(c,cls='')=>`<span class="av ${c.sh} ${cls}">${icon(c.ic)}</span>`;
+function climb(c){let h='';for(let i=0;i<10;i++){const cls=i<5?'on':(i<c.max?'hi':'');h+=`<i class="${cls}"></i>`}return `<span class="blk gap" aria-hidden="true">${h}</span>`}
+const climbTxt=c=>`${c.max}x · ${LADN[c.l]}, max at ${LADDERS[c.l][5]}`;
+
+function card(c,isNew){
+  return `<a class="cc" href="#coin-${c.id}"><div class="top">${av(c)}<div class="meta"><b>$${esc(c.t)}</b><span>${esc(c.n)}</span></div>${isNew?`<span class="age">${ago(c.age)}</span>`:`<span class="mc">${usd(c.mcap)}</span>`}</div>
+  <div class="cl">${climb(c)}<small>${climbTxt(c)}</small></div>
+  <div class="trio"><div><div class="k">Paid out</div><div class="v">${sol(c.paid)}<small>SOL</small></div></div><div><div class="k">Lockers</div><div class="v">${c.lockers}</div></div><div><div class="k">${isNew?'Mcap':'Pair'}</div><div class="v">${isNew?usd(c.mcap):esc(c.p)}</div></div></div></a>`;
+}
+
+const T={launched:0,vaultPaid:0,lockPaid:0,lockers:0,lockLockers:0,fromCoins:0,treasury:0};
+const emptyCard=(t,p)=>`<div class="empty"><b>${t}</b><p>${p}</p><a class="btn sm" href="#launch">Launch a coin</a></div>`;
+
+function countUp(el,to,dec){
+  if(!el)return;const f=v=>v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){el.textContent=f(to);return}
+  const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/900);el.textContent=f(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(s)})(t0);
+}
+
+// HOME
+function renderHome(){
+  const top=[...coins].sort((a,b)=>b.mcap-a.mcap)[0];
+  if(!top){$('#topCoin').innerHTML=`<div class="r1"><span class="lbl">TOP COIN ON ESCROW</span><a href="#launch">Launch →</a></div><div class="c"><span class="av lg" style="background:var(--dark2)">${icon('lock')}</span><div><div class="tk">No coins yet</div><div class="nm">The biggest coin launched on Escrow shows up here.</div></div></div><div class="g3"><div><div class="k">Mcap</div><div class="v mono">$0</div></div><div><div class="k">Paid out</div><div class="v mono">0<span class="u" style="color:var(--on-dark-m)">SOL</span></div></div><div><div class="k">Lockers</div><div class="v mono">0</div></div></div>`}
+  else $('#topCoin').innerHTML=`<div class="r1"><span class="lbl">TOP COIN ON ESCROW</span><a href="#coin-${top.id}">Open coin →</a></div>
+   <div class="c">${av(top,'lg')}<div><div class="tk">$${top.t}</div><div class="nm">${top.n}</div>${climb(top)}<small>${climbTxt(top)}</small></div></div>
+   <div class="g3"><div><div class="k">Mcap</div><div class="v mono">${usd(top.mcap)}</div></div><div><div class="k">Paid out</div><div class="v mono">${top.paid}<span class="u" style="color:var(--on-dark-m)">SOL</span></div></div><div><div class="k">Lockers</div><div class="v mono">${top.lockers}</div></div></div>`;
+  const newest=[...coins].sort((a,b)=>a.age-b.age);
+  $('#justLaunched').innerHTML=newest.length?newest.slice(0,3).map(c=>`<a class="item" href="#coin-${c.id}">${av(c)}<div class="meta"><b>$${c.t}</b><span>${c.n.toUpperCase()}</span></div><div class="r"><b>${usd(c.mcap)}</b><span>${ago(c.age)}</span></div></a>`).join(''):`<p class="sub" style="font-size:15px;padding:8px 0">No launches yet. New coins show up here the moment they go live.</p>`;
+  $('#trending').innerHTML=coins.length?[...coins].sort((a,b)=>b.mcap-a.mcap).slice(0,8).map(c=>card(c,false)).join(''):emptyCard('No coins yet','Launch the first coin on Escrow and it leads the board from day one.');
+  $('#newLaunches').innerHTML=newest.length?newest.slice(0,8).map(c=>card(c,true)).join(''):emptyCard('Nothing launched yet','Early lockers lock in first. Be the coin they lock into.');
+  countUp($('#sLaunched'),T.launched,0);countUp($('#sPaid'),T.vaultPaid+T.lockPaid,0);countUp($('#sLockers'),T.lockers+T.lockLockers,0);
+  $('#bPaid').textContent=T.lockPaid.toFixed(0);$('#bLockers').textContent=T.lockLockers;
+}
+
+// LAUNCH
+let lMax=7.5,lLad='standard';
+function pressed(g,b){g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))}
+function renderLadder(){
+  const L=LADDERS[lLad];
+  $('#ladCols').innerHTML=L.map((d,i)=>{const m=mult(lMax,i);let s='';for(let k=0;k<10;k++){let c='';if(k<Math.floor(m))c=k<5?'on':'hi';else if(k<m)c='hf';s+=`<i class="${c}"></i>`}return `<div class="col"><div class="stk">${s}</div><b>${m}x</b><span>${d==='Flex'?'flex':d}</span></div>`}).join('');
+  const ms=L.map((d,i)=>mult(lMax,i));
+  $('#ladNote').textContent=`A ${L[0]} lock earns 1x, ${ms[1]}x for ${L[1]}, up to ${lMax}x for ${L[5]}. 10,000 tokens locked at ${lMax}x weigh the same as ${(10000*lMax).toLocaleString('en-US')} tokens at 1x.`;
+  renderSummary();
+}
+function renderSummary(){
+  const tk=($('#fTicker').value||'TICKER');const fb=$('#firstBuy [aria-pressed="true"]').dataset.v;const as=$('#autoEscrow [aria-pressed="true"]').dataset.v;
+  $('#summary').innerHTML=`<div><span>Pair</span><b>${esc(tk)}/${esc($('#fPair').value)}</b></div><div><span>Supply</span><b>1,000,000,000</b></div><div><span>Multiplier</span><b>1x → ${lMax}x · ${LADN[lLad]}, max at ${LADDERS[lLad][5]}</b></div><div><span>Trading fees</span><b>60% lockers · 30% $ESCROW · 10% treasury</b></div><div><span>First buy</span><b>${fb}${fb!=='None'&&as==='max'?', locked '+LADDERS[lLad][5]:''}</b></div>`;
+}
+$('#maxPick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($('#maxPick'),b);lMax=+b.dataset.v;renderLadder()});
+$('#ladPick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($('#ladPick'),b);lLad=b.dataset.v;renderLadder()});
+['#firstBuy','#autoEscrow'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($(id),b);renderSummary()}));
+$('#fTicker').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');renderSummary()});
+$('#fPair').addEventListener('change',renderSummary);
+$('#imgInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const d=$('#imgDrop');d.querySelector('span,img')?.remove();const im=new Image();im.alt='Coin image';im.src=r.result;d.prepend(im)};r.readAsDataURL(f)});
+$('#imgDrop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#imgInput').click()}});
+let wallet=null;
+const short=a=>a.slice(0,4)+'…'+a.slice(-4);
+async function connectWallet(){
+  const p=window.phantom?.solana||window.solflare||window.solana;
+  if(!p||!p.connect){toast('No Solana wallet found. Install Phantom or Solflare, then try again.');window.open('https://phantom.app/','_blank','noopener');return null}
+  try{const r=await p.connect();wallet=(r&&r.publicKey||p.publicKey).toString();updateWallet();toast('Connected '+short(wallet)+'.');return wallet}
+  catch(e){toast('Wallet connection was cancelled.');return null}
+}
+function updateWallet(){
+  $$('.js-connect').forEach(b=>{const a=b.dataset.act;b.textContent=a==='launch'?'Launch coin':a==='escrow'?'Lock now':short(wallet)});
+  $('#pAddr').value=wallet;showProfile(wallet);renderLb();
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('.js-connect');if(!b)return;
+  const a=b.dataset.act;
+  if(a==='launch'&&(!$('#fTicker').value||!$('#fName').value)){toast('Add a ticker and a name first.');(!$('#fTicker').value?$('#fTicker'):$('#fName')).focus();return}
+  if(!wallet){await connectWallet();return}
+  if(a==='agreement'){toast('Escrow agreements open soon. Follow @EscrowPays on X for the date.');return}
+  if(a==='launch')toast('Launches open soon. Follow @EscrowPays on X for the date.');
+  else if(a==='escrow')toast('Locking opens with the $ESCROW launch. Follow @EscrowPays on X for the date.');
+  else location.hash='profile';
+});
+
+// COINS
+let sortKey='mcap';
+function renderCoins(){
+  const list=[...coins].sort((a,b)=>sortKey==='age'?a.age-b.age:b[sortKey]-a[sortKey]);
+  $('#coinRows').innerHTML=!list.length?`<tr><td class="emp" colspan="7">No coins launched yet. <a class="tl" href="#launch">Launch the first one →</a></td></tr>`:list.map(c=>`<tr class="click" data-id="${c.id}" tabindex="0"><td><div class="cellc">${av(c,'sm')}<div><b>$${c.t}</b><span>${c.n} · <span class="mo">${c.dev}</span></span></div></div></td><td>${c.p}</td><td>${climb(c)}<div style="font-size:13px;color:var(--muted);margin-top:4px">${climbTxt(c)}</div></td><td class="m">${c.lockers}</td><td class="m">${usd(c.mcap)}</td><td class="m">${sol(c.paid)} SOL</td><td class="m">${ago(c.age)}</td></tr>`).join('');
+}
+$$('.sortbar .chip').forEach(b=>b.addEventListener('click',()=>{$$('.sortbar .chip').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));sortKey=b.dataset.sort;renderCoins()}));
+$('#coinRows').addEventListener('click',e=>{const r=e.target.closest('tr');if(r)location.hash='coin-'+r.dataset.id});
+$('#coinRows').addEventListener('keydown',e=>{const r=e.target.closest('tr');if(r&&e.key==='Enter')location.hash='coin-'+r.dataset.id});
+
+// COIN DETAIL
+function unlockText(days){if(!days)return'Any time';return new Date(Date.now()+days*864e5).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function renderCoin(id){
+  const c=coins.find(x=>x.id===id);
+  if(!c){$('#coinDetail').innerHTML=`<h1 style="margin-top:48px">No coin here.</h1><p class="lead">That coin isn’t on Escrow. Browse the ones that are.</p><a class="btn" href="#coins">Browse coins</a>`;return}
+  const L=LADDERS[c.l],D=LDAYS[c.l];
+  $('#coinDetail').innerHTML=`<div class="coinhead">${av(c,'lg')}<div><h1>$${c.t}</h1><div style="color:var(--muted);font-size:18px">${c.n} · paired with ${c.p}</div><div style="margin-top:10px">${climb(c)}</div></div></div>
+  <div class="paybar" style="grid-template-columns:repeat(4,1fr)">
+   <div class="box d"><div class="k">Mcap</div><div class="v mono">${usd(c.mcap)}</div></div>
+   <div class="box"><div class="k">Paid out</div><div class="v mono">${sol(c.paid)}<small>SOL</small></div></div>
+   <div class="box"><div class="k">Lockers</div><div class="v mono">${c.lockers}</div></div>
+   <div class="box"><div class="k">Multiplier</div><div class="v mono">${c.max}x<small>max at ${L[5]}</small></div></div>
+  </div>
+  <div class="calc">
+   <div class="panel"><b style="font-size:19px">Escrow $${c.t}</b>
+    <div class="field" style="margin-top:14px"><label for="vAmt">Amount</label><input class="inp mono" id="vAmt" type="number" value="1000000" min="0" step="1000"></div>
+    <div class="field"><span class="flab">Lock</span><div class="seg" id="vLock">${L.map((d,i)=>`<button aria-pressed="${i===5}" data-i="${i}">${d}<small>${mult(c.max,i)}x</small></button>`).join('')}</div></div>
+    <p class="note">${LADN[c.l]} ladder, set by the creator at launch. Locked tokens stay in the vault until the lock ends.</p>
+   </div>
+   <div class="out"><div class="k">Your reward weight</div><div class="v mono" id="vW">0</div>
+    <div class="row"><span>Lock</span><b id="vL"></b></div><div class="row"><span>Unlocks</span><b id="vU"></b></div><div class="row"><span>Paid in</span><b>SOL, every 10 min</b></div>
+    <button class="btn notch-s js-connect" data-act="escrow">Connect wallet to lock</button></div>
+  </div>`;
+  const upd=()=>{const i=+$('#vLock [aria-pressed="true"]').dataset.i;const a=Math.max(0,+$('#vAmt').value||0),m=mult(c.max,i);$('#vW').textContent=(a*m).toLocaleString('en-US');$('#vL').textContent=`${L[i]==='Flex'?'Flexible':L[i]} at ${m}x`;$('#vU').textContent=unlockText(D[i])};
+  $('#vLock').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($('#vLock'),b);upd()});
+  $('#vAmt').addEventListener('input',upd);upd();
+}
+
+// $ESCROW
+const SL=LADDERS.standard,SD=LDAYS.standard,SMAX=7.5;
+const POOL_W=()=>Math.max(0,+$('#cPool').value||0);
+let lockI=5;
+$('#lockPick').innerHTML=SL.map((d,i)=>`<button aria-pressed="${i===lockI}" data-i="${i}">${d}<small>${mult(SMAX,i)}x</small></button>`).join('');
+$('#lockPick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($('#lockPick'),b);lockI=+b.dataset.i;calc()});
+['#cAmt','#cFees','#cPool'].forEach(id=>$(id).addEventListener('input',calc));
+function calc(){const a=Math.max(0,+$('#cAmt').value||0),f=Math.max(0,+$('#cFees').value||0),m=mult(SMAX,lockI),w=a*m,sh=w>0?w/(POOL_W()+w):0,d=f*sh;
+  $('#oWeight').textContent=w.toLocaleString('en-US');$('#oShare').textContent=(sh*100).toFixed(2)+'%';$('#oTen').textContent=(d/144).toFixed(5)+' SOL';$('#oDay').textContent=d.toFixed(3)+' SOL';$('#oUnlock').textContent=unlockText(SD[lockI])}
+const lockers=[];
+function miniClimb(m){let h='';for(let i=0;i<10;i++){let c='';if(i<Math.floor(m))c=i<5?'on':'hi';else if(i<m)c='on" style="opacity:.45';h+=`<i class="${c}"></i>`}return `<span class="blk" style="display:inline-flex;vertical-align:middle">${h}</span>`}
+function renderLockers(q=''){
+  const rows=lockers.filter(s=>s.w.toLowerCase().includes(q.toLowerCase()));
+  $('#lockrRows').innerHTML=rows.length?rows.map(s=>`<tr><td class="m" style="${s.rank<4?'color:var(--g);font-weight:700':''}">${s.rank}</td><td class="m" style="font-weight:700">${s.w}</td><td class="m">${(s.bag/1e6).toFixed(1)}M</td><td>${SL[s.li]==='Flex'?'Flexible':SL[s.li]}</td><td class="m">${s.li?s.left+'d':'—'}</td><td>${miniClimb(s.m)}<b class="mono" style="margin-left:10px">${s.m}x</b></td><td class="m">${(s.wt/POOL_W()*100).toFixed(2)}%</td><td class="m">&lt;0.001</td><td class="m">${s.paid}</td></tr>`).join(''):`<tr><td class="emp" colspan="9">${q?'No lockr matches that wallet.':'No lockers yet. Locking opens with the $ESCROW launch.'}</td></tr>`;
+}
+$('#findWallet').addEventListener('input',e=>renderLockers(e.target.value));
+function renderSent(){
+  const list=coins.filter(c=>c.paid>0).sort((a,b)=>b.paid-a.paid);
+  $('#sentRows').innerHTML=!list.length?`<tr><td class="emp" colspan="4">No fees sent yet. Every coin launched on Escrow shows up here.</td></tr>`:list.map((c,i)=>`<tr class="click" data-id="${c.id}"><td class="m">${i+1}</td><td><div class="cellc">${av(c,'sm')}<div><b>$${c.t}</b><span>${c.n}</span></div></div></td><td class="g">${(c.paid*0.8).toFixed(2)}<small>SOL</small></td><td class="m">${c.lockers}</td></tr>`).join('');
+}
+$('#sentRows').addEventListener('click',e=>{const r=e.target.closest('tr');if(r)location.hash='coin-'+r.dataset.id});
+
+// LEADERBOARD
+function renderLb(){
+  $('#lbRows').innerHTML=`<tr><td class="emp" colspan="7">${wallet?'No agreements yet for this wallet. Create one above.':'Connect your wallet to see your agreements.'}</td></tr>`;
+}
+let agType='time';
+const AGCOND={
+ time:`<div class="field"><label for="agDate">Unlocks on</label><input class="inp" id="agDate" type="date"></div>`,
+ milestone:`<div class="field"><label for="agMs">Milestone</label><input class="inp" id="agMs" placeholder="What has to happen"></div><div class="field"><label for="agVer">Verifier wallet<em>confirms the milestone</em></label><input class="inp mono" id="agVer" placeholder="Solana address" style="font-size:15px"></div>`,
+ mutual:`<p class="note" style="margin:0 0 16px">The recipient has to approve, then you approve, before funds move.</p>`,
+ stream:`<div class="tri" style="grid-template-columns:1fr 1fr"><div class="field"><label for="agS">Starts</label><input class="inp" id="agS" type="date"></div><div class="field"><label for="agE">Fully unlocked</label><input class="inp" id="agE" type="date"></div></div>`,
+ reward:`<div class="field"><span class="flab">Lock length</span><div class="seg" id="agLock">${['7d','14d','30d','90d','180d','365d'].map((d,i)=>`<button aria-pressed="${i===5}" data-i="${i}">${d}<small>${[1,1.5,2,3.5,5,7.5][i]}x</small></button>`).join('')}</div></div>`
+};
+const AGN={time:'Time-locked',milestone:'Milestone',mutual:'Mutual',stream:'Streaming',reward:'Reward'};
+function renderAg(){
+  $('#agCond').innerHTML=AGCOND[agType];
+  $('#agRecipWrap').style.display=agType==='reward'?'none':'';
+  $('#agCond').querySelectorAll('input,select').forEach(i=>i.addEventListener('input',agSum));
+  const lp=$('#agLock');if(lp)lp.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed(lp,b);agSum()});
+  agSum();
+}
+function agSum(){
+  const v=id=>($(id)&&$(id).value)||'';
+  const amt=v('#agAmt'),asset=v('#agAsset'),r=v('#agRecip');
+  let rel='—';
+  if(agType==='time')rel=v('#agDate')?'On '+new Date(v('#agDate')+'T00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'Pick a date';
+  if(agType==='milestone')rel=v('#agMs')?'When verified: '+esc(v('#agMs')):'Describe the milestone';
+  if(agType==='mutual')rel='When both parties approve';
+  if(agType==='stream')rel=v('#agS')&&v('#agE')?`Gradually, ${v('#agS')} to ${v('#agE')}`:'Pick start and end dates';
+  if(agType==='reward'){const b=$('#agLock [aria-pressed="true"]');const i=b?+b.dataset.i:5;rel=`After ${['7','14','30','90','180','365'][i]} days, earning at ${[1,1.5,2,3.5,5,7.5][i]}x`}
+  $('#agSummary').innerHTML=`<div><span>Type</span><b>${AGN[agType]}</b></div><div><span>Locking</span><b>${amt?esc(amt)+' ':''}${esc(asset)}</b></div>${agType==='reward'?'':`<div><span>Recipient</span><b class="mono" style="font-size:15px">${r?esc(r.length>12?r.slice(0,4)+'…'+r.slice(-4):r):'—'}</b></div>`}<div><span>Releases</span><b>${rel}</b></div><div><span>Cancellation</span><b>${esc(v('#agCancel'))}</b></div>`;
+}
+$('#agType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed($('#agType'),b);agType=b.dataset.v;renderAg()});
+['#agAmt','#agRecip','#agAsset','#agCancel'].forEach(id=>$(id).addEventListener('input',agSum));
+
+// timers
+$('#ticks').innerHTML='<i></i>'.repeat(10);
+function etParts(){const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'numeric',second:'numeric',hourCycle:'h23'}).formatToParts(new Date());const g=t=>+p.find(x=>x.type===t).value;return g('hour')*3600+g('minute')*60+g('second')}
+function tick(){
+  const ms=600000-(Date.now()%600000),m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000),t=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  $('#timer').textContent=t;$('#timer2').textContent=t;
+  const done=Math.floor((600000-ms)/60000);$$('#ticks i').forEach((x,i)=>x.classList.toggle('on',i<done));
+  $('#feePot').textContent='0.0000';
+}
+setInterval(tick,1000);tick();
+
+// stats for inner pages
+function renderStatic(){
+  countUp($('#tLaunched'),T.launched,0);countUp($('#tPaid'),T.vaultPaid,2);countUp($('#tLockers'),T.lockers,0);
+  countUp($('#pPaid'),T.lockPaid,0);countUp($('#pLockers'),T.lockLockers,0);countUp($('#fromCoins'),T.fromCoins,2);
+  $('#cLaunched2').textContent=T.launched;
+  const tot=T.lockPaid+T.vaultPaid;countUp($('#dTotal'),tot,2);
+  const on=tot?Math.round(T.lockPaid/tot*20):0;$('#pxbar').innerHTML=Array.from({length:20},(_,i)=>`<i class="${i<on?'':'l'}"></i>`).join('');
+  $('#dS').textContent=T.lockPaid.toFixed(0)+' SOL';$('#dV').textContent=T.vaultPaid.toFixed(2)+' SOL';$('#dFrom').textContent=T.fromCoins.toFixed(2);
+  $('#dCoins').textContent=T.launched;$('#dLockers').textContent=T.lockers;
+  $('#activeV').textContent=coins.filter(c=>c.paid>0).length;$('#topRound').textContent=coins.length?usd(Math.max(...coins.map(c=>c.mcap))):'$0';
+  countUp($('#tre'),T.treasury,2);
+}
+
+// profile
+function showProfile(a){
+  if(!a){toast('Paste a Solana wallet address first.');$('#pAddr').focus();return}
+  if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a)){$('#pResult').innerHTML=`<div class="panel"><b>That isn’t a Solana address</b><p class="sub" style="font-size:16px">Addresses are 32 to 44 characters and never use 0, O, I or l.</p></div>`;return}
+  $('#pResult').innerHTML=`<div class="panel"><b>No locks yet</b><p class="sub" style="font-size:16px;margin:6px 0 14px"><span class="mono" style="font-weight:500">${esc(a.slice(0,4)+'…'+a.slice(-4))}</span> hasn’t locked on Escrow yet. Every coin it locks shows up here with its lock and what it pays every 10 minutes.</p><a class="btn sm" href="#coins">Browse coins</a></div>`;
+}
+$('#pShow').addEventListener('click',()=>showProfile($('#pAddr').value.trim()));
+$('#pAddr').addEventListener('keydown',e=>{if(e.key==='Enter')showProfile(e.target.value.trim())});
+
+// toast
+let tt;function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3200)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-toast]');if(b)toast(b.dataset.toast)});
+
+// router
+const VIEWS=['home','launch','coins','escrow','fees','agreements','dashboard','profile'];
+let homeDone=false,staticDone=false;
+function route(){
+  if(location.hash==='#new-agreement'){history.replaceState(null,'','#agreements');route();document.getElementById('new-agreement').scrollIntoView();return}
+  const h=location.hash.slice(1)||'home';let view=h,cid=null;
+  if(h.startsWith('coin-')){view='coin';cid=h.slice(5)}else if(!VIEWS.includes(h))view='home';
+  $$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+view));
+  const nk=view==='coin'?'coins':view;
+  $$('.links a').forEach(a=>{if(a.getAttribute('href')==='#'+nk)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  document.body.className='on-'+view;
+  if(view==='home'&&!homeDone){renderHome();homeDone=true}
+  if(view!=='home'&&!staticDone){renderStatic();staticDone=true}
+  if(view==='coin')renderCoin(cid);
+  window.scrollTo(0,0);
+}
+renderLadder();renderAg();renderCoins();renderLockers();renderSent();renderLb();calc();
+window.addEventListener('hashchange',route);route();
+})();
+</script>
+</body>
+</html>
